@@ -1,28 +1,26 @@
 package com.rest.full;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
-import java.time.format.DateTimeFormatter;
-import java.util.Collection;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.text.WordUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.rest.utils.Age;
+
 
 @Path("/jsonbased")
 public class JSONBasedPersona {
@@ -57,7 +55,16 @@ public class JSONBasedPersona {
 				&&	validarSexo(sexo)){
 				
 				//Se calcula la edad de la persona
-				//String edad = calcularEdadPersona(fecha_nacimento);
+				SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+			    Date birthDate = new Date();
+				try {
+					birthDate = sdf.parse(fecha_nacimento.replace("-", "/"));
+				} catch (ParseException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			    Age age = calcularEdadPersona(birthDate);
+				String edad = age.toString();
 				
 				//Se genera JSON del response
 				jsonObject.put("codigo", "0000");
@@ -66,7 +73,9 @@ public class JSONBasedPersona {
 				jsonObject.put("nombreCompleto", normalizarnombreCompleto(nombre_completo));
 				jsonObject.put("fechaNacimento", fecha_nacimento);
 				jsonObject.put("sexo", normalizarSexo(sexo));
-				//jsonObject.put("edad", edad);
+				jsonObject.put("edad", edad);
+				
+				
 			}else{
 				jsonObject.put("codigo", "0002");
 				jsonObject.put("descipcion", "Se esperan parametros de entrada con formatos especificos.");
@@ -81,20 +90,60 @@ public class JSONBasedPersona {
 	
 	/**
 	 * Meotodo para calcular la edad de la persona
-	 * con formato Años/Meses/dias
+	 * con formato Años-Meses-dias
 	 * @param fecha_nacimento
 	 * @return
 	 */
-	private String calcularEdadPersona(String fecha_nacimento) {
-		DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-		LocalDate fechaNac = LocalDate.parse(fecha_nacimento, fmt);
-		LocalDate ahora = LocalDate.now();
-
-		Period periodo = Period.between(fechaNac, ahora);
-		String edad = periodo.getYears()+"-"+periodo.getMonths()+"-"+periodo.getDays();
-		
-		return edad;
-	}
+	private static Age calcularEdadPersona(Date birthDate)
+	   {
+	      int years = 0;
+	      int months = 0;
+	      int days = 0;
+	      //create calendar object for birth day
+	      Calendar birthDay = Calendar.getInstance();
+	      birthDay.setTimeInMillis(birthDate.getTime());
+	      //create calendar object for current day
+	      long currentTime = System.currentTimeMillis();
+	      Calendar now = Calendar.getInstance();
+	      now.setTimeInMillis(currentTime);
+	      //Get difference between years
+	      years = now.get(Calendar.YEAR) - birthDay.get(Calendar.YEAR);
+	      int currMonth = now.get(Calendar.MONTH) + 1;
+	      int birthMonth = birthDay.get(Calendar.MONTH) + 1;
+	      //Get difference between months
+	      months = currMonth - birthMonth;
+	      //if month difference is in negative then reduce years by one and calculate the number of months.
+	      if (months < 0)
+	      {
+	         years--;
+	         months = 12 - birthMonth + currMonth;
+	         if (now.get(Calendar.DATE) < birthDay.get(Calendar.DATE))
+	            months--;
+	      } else if (months == 0 && now.get(Calendar.DATE) < birthDay.get(Calendar.DATE))
+	      {
+	         years--;
+	         months = 11;
+	      }
+	      //Calculate the days
+	      if (now.get(Calendar.DATE) > birthDay.get(Calendar.DATE))
+	         days = now.get(Calendar.DATE) - birthDay.get(Calendar.DATE);
+	      else if (now.get(Calendar.DATE) < birthDay.get(Calendar.DATE))
+	      {
+	         int today = now.get(Calendar.DAY_OF_MONTH);
+	         now.add(Calendar.MONTH, -1);
+	         days = now.getActualMaximum(Calendar.DAY_OF_MONTH) - birthDay.get(Calendar.DAY_OF_MONTH) + today;
+	      } else
+	      {
+	         days = 0;
+	         if (months == 12)
+	         {
+	            years++;
+	            months = 0;
+	         }
+	      }
+	      //Create new Age object 
+	      return new Age(days, months, years);
+	   }
 
 	/**
 	 * Metodo para normalizar el sexo de la Persona
