@@ -1,0 +1,50 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="/resources/demos/style.css">
+  <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script type="text/javascript">
+  $( document ).ready(function() {
+	    console.log( "ready!" );
+	    //Se crea un listener del evento click sobre el boton consumir para consumir el web service rest
+	    $( "consumir" ).click(function() {
+			//Obtenermos los valores del formulario para enviarlos al Web Service
+	    	  var run = $( "run" ).val();
+	    	  var nombre = $( "nombre" ).val();
+	    	  var fecha = $( "fecha" ).val();
+	    	  var sexo = $( "sexo" ).val();
+	    	  var host = "172.31.38.191";
+	    	  var url = 'http://'+host+'/RESTFullPersona-0.1/api/jsonbased/'+run+'&'+nombre'&'+fecha'&'+sexo;
+	    	  
+	    	  var jqxhr = $.ajax( url )
+	    	  .done(function(data) {
+	    		  $( "response" ).html(data);
+	    	  })
+	    	  .fail(function() {
+	    	    alert( "error" );
+	    	  })
+	    	  .always(function() {
+	    	    console.log( "complete" );
+	    	  });
+	    });
+	});
+  </script>
+</head>
+<body>
+<h1>Consumir web servvice Rest</h1>
+
+<form>
+Run: <input type="text" id="run" name="run" ><br/>
+Nombre Completo: <input type="text" id="nombre" name ="nombre" ><br />
+Fecha Nacimiento: <input type="text" id="fecha" name="fecha" /> Ejemplo: 23-12-1988<br />
+sexo: <input type="text" id="sexo" name="sexo" /><br />
+
+</form>
+<input type="button" value="Consumir" id="consumir"><br />
+<div id="response"></div>
+</body>
+</html>
